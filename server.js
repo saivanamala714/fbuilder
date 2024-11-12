@@ -45,35 +45,6 @@ app.get('/optionInterestByTicker', async (req, res) => {
       'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'
     }
   };
-
-  // axios.request(config)
-  //   .then((response) => {
-  //     const openInterestData = response.data.data.table.rows
-
-  //     let mappedData = [];
-  //     let sortByVolume = [];
-  //     let filteredData = [];
-  //     if (callPut == 'call') {
-  //       filteredData = _.filter(openInterestData, e => {
-  //         const openInterestNumber = Number(e.c_Openinterest);
-  //         return _.isNumber(openInterestNumber) && openInterestNumber > 0
-  //       })
-  //       mappedData = _.map(filteredData, (e, i) => { return { ...e, c_Openinterest: Number(e.c_Openinterest), id: e.c_Openinterest + i } })
-  //       sortByVolume = _.orderBy(mappedData, 'c_Openinterest', 'desc')
-  //     } else {
-  //       filteredData = _.filter(openInterestData, e => {
-  //         const openInterestNumber = Number(e.p_Openinterest);
-  //         return _.isNumber(openInterestNumber) && openInterestNumber > 0
-  //       })
-  //       mappedData = _.map(filteredData, (e, i) => { return { ...e, p_Openinterest: Number(e.p_Openinterest), id: e.p_Openinterest + i } })
-  //       sortByVolume = _.orderBy(mappedData, 'p_Openinterest', 'desc')
-  //     }
-
-  //     res.send(sortByVolume)
-  //   })
-  //   .catch((error) => {
-  //     console.log(error);
-  //   });
   const response = await axios.request(config);
   console.log(response)
   const openInterestData = response.data.data.table.rows
@@ -98,11 +69,21 @@ app.get('/optionInterestByTicker', async (req, res) => {
   }
 
 
-  const result = await client.db("local").collection("option_volume_history").insertOne({time: currentDate, data: sortByVolume.slice(0, 10), ticker, callPut});
+  const result = await client.db("local").collection("option_volume_history").insertOne({ time: new Date((new Date).toISOString()), data: sortByVolume.slice(0, 10), ticker, callPut, ttl:30 });
   console.log(`New listing created with the following id: ${result.insertedId}`);
   res.send(sortByVolume)
 })
 
+app.get('/optionInterestByTickerHistoricalData', async (req, res) => {
+  const cursor = await client.db("local").collection("option_volume_history").find();
+  // iterate code goes here
+  const { ticker, callPut } = req.query;
+  let result = []
+  await cursor.forEach(e => result.push(e));
+  let result1 = _.sortBy(_.filter(result, item => item.ticker == ticker && item.callPut == callPut).map(e => { return { ...e, ...e.data[0], data: undefined, id: e.time } }), e => e.time);
+
+  return res.send(result1)
+})
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })

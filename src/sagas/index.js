@@ -1,18 +1,24 @@
 import { put, takeLatest, all, call } from 'redux-saga/effects';
-import getVolumeData from '../services/getVolumeData';
-function* fetchNews({ payload}) {
+import { getLatestOptionInfoApi, getHistoricalOptionInfoApi } from '../services/getVolumeData';
+import { GET_LATEST_OPTION_INFO, LATEST_OPTION_INFO, GET_HISTORICAL_OPTION_INFO, HISTORICAL_OPTION_INFO } from '../constants/actionTypes';
+function* fetchLatestOptionInfo({ payload }) {
   const { ticker, callPut } = payload;
-    const { data } = yield call(getVolumeData, { ticker , callPut});
+  const { data } = yield call(getLatestOptionInfoApi, { ticker, callPut });
 
-  console.log(data)
+  yield put({ type: LATEST_OPTION_INFO, payload: data });
+}
+function* fetchHistoricalOptionInfo({ payload }) {
+  const { ticker, callPut } = payload;
+  const { data } = yield call(getHistoricalOptionInfoApi, { ticker, callPut });
 
-  yield put({ type: "NEWS_RECEIVED", payload: data });
+  yield put({ type: HISTORICAL_OPTION_INFO, payload: data });
 }
 function* actionWatcher() {
-     yield takeLatest('GET_NEWS', fetchNews)
+  yield takeLatest(GET_LATEST_OPTION_INFO, fetchLatestOptionInfo);
+  yield takeLatest(GET_HISTORICAL_OPTION_INFO, fetchHistoricalOptionInfo );
 }
 export default function* rootSaga() {
-   yield all([
-   actionWatcher(),
-   ]);
+  yield all([
+    actionWatcher(),
+  ]);
 }

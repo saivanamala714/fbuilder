@@ -1,5 +1,5 @@
 import axios from 'axios';
-const getVolumeData = async ({ticker, callPut}) => {
+const getLatestOptionInfoApi = async ({ticker, callPut}) => {
   try{
     const url = `http://localhost:3001/optionInterestByTicker?ticker=${ticker}&callPut=${callPut}`;
     return await axios.get(url);
@@ -8,4 +8,13 @@ const getVolumeData = async ({ticker, callPut}) => {
   }
 }
 
-export default getVolumeData;
+const getHistoricalOptionInfoApi = async ({ticker, callPut}) => {
+  try{
+    const url = `http://localhost:3001/optionInterestByTickerHistoricalData?ticker=${ticker}&callPut=${callPut}`;
+    return await axios.get(url);
+  }catch(err){
+    throw new Error(err.message);
+  }
+}
+
+export  { getLatestOptionInfoApi, getHistoricalOptionInfoApi } ;
